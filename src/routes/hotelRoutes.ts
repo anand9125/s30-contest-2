@@ -29,9 +29,9 @@ router.post('/', authMiddleware, requireRole('owner'), async (req:Request, res:R
     const validatedData = createHotelSchema.parse(req.body);
     const hotel = await prisma.hotel.create({
       data: {
-        ownerId: req.user.id ,
+        ownerId: req.user!.id ,
         name: validatedData.name,
-        description: validatedData.description as string,
+        description: validatedData.description ?? null,
         city: validatedData.city,
         country: validatedData.country,
         amenities: validatedData.amenities

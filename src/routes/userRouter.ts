@@ -60,7 +60,7 @@ router.post('/signup', async (req:Request, res:Response) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', async (req: Request, res: Response) => {
   try {
     const validatedData = loginSchema.parse(req.body);
     

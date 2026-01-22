@@ -1,7 +1,7 @@
 
 import type { NextFunction, Response, Request } from "express";
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from "../types/schema.js";
+import { JWT_SECRET } from '../types/schema.js';
 
 declare global {
   namespace Express {
@@ -21,45 +21,28 @@ interface JWTPayload {
   role: string;
 }
 
-export const authMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
-    console.log("Auth Header:", authHeader);
-
-    if (!authHeader) {
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
         data: null,
-        error: "UNAUTHORIZED",
-      });
-    }
-    const [scheme, token] = authHeader.split(" ");
-
-    if (scheme !== "Bearer" || !token) {
-      return res.status(401).json({
-        success: false,
-        data: null,
-        error: "INVALID_AUTH_HEADER",
+        error: 'UNAUTHORIZED'
       });
     }
 
-    console.log("JWT Token:", token);
-
-    const decoded = jwt.verify(token, JWT_SECRET as string) as JWTPayload;
-    console.log("Decoded Token:", decoded);
-
+    const token = authHeader.substring(7);
+    
+    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
     req.user = decoded;
     next();
   } catch (error) {
-    console.error("Auth Middleware Error:", error);
     return res.status(401).json({
       success: false,
       data: null,
-      error: "UNAUTHORIZED",
+      error: 'UNAUTHORIZED'
     });
   }
 };
