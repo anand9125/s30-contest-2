@@ -70,6 +70,123 @@ router.post('/', authMiddleware, requireRole('owner'), async (req:Request, res:R
   }
 });
 
+router.get('/', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { city, country, minPrice, maxPrice } = req.query;
+    
+    const where: any = {};
+    
+    if (city) where.city = city;
+    if (country) where.country = country;
+    
+    if (minPrice || maxPrice) {
+      where.rooms = {
+        some: {
+          pricePerNight: {
+            ...(minPrice && { gte: parseFloat(minPrice as string) }),
+            ...(maxPrice && { lte: parseFloat(maxPrice as string) })
+          }
+        }
+      };
+    }
+    
+    const hotels = await prisma.hotel.findMany({
+      where,
+      include: {
+        rooms: true
+      }
+    });
+    
+    const formattedHotels = hotels.map(hotel => ({
+      id: hotel.id,
+      name: hotel.name,
+      description: hotel.description,
+      city: hotel.city,
+      country: hotel.country,
+      amenities: hotel.amenities,
+      rating: hotel.rating,
+      totalReviews: hotel.totalReviews,
+      rooms: hotel.rooms.map(room => ({
+        id: room.id,
+        roomNumber: room.roomNumber,
+        roomType: room.roomType,
+        pricePerNight: room.pricePerNight,
+        maxOccupancy: room.maxOccupancy
+      }))
+    }));
+    
+    return res.status(200).json({
+      success: true,
+      data: formattedHotels,
+      error: null
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      data: null,
+      error: 'INTERNAL_SERVER_ERROR'
+    });
+  }
+});
+
+router.get('/:hotelId', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { hotelId } = req.params;
+    
+    if (!hotelId || typeof hotelId !== 'string') {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        error: 'INVALID_HOTEL_ID'
+      });
+    }
+    
+    const hotel = await prisma.hotel.findUnique({
+      where: { id: hotelId },
+      include: {
+        rooms: true
+      }
+    });
+    
+    if (!hotel) {
+      return res.status(404).json({
+        success: false,
+        data: null,
+        error: 'HOTEL_NOT_FOUND'
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: hotel.id,
+        ownerId: hotel.ownerId,
+        name: hotel.name,
+        description: hotel.description,
+        city: hotel.city,
+        country: hotel.country,
+        amenities: hotel.amenities,
+        rating: hotel.rating,
+        totalReviews: hotel.totalReviews,
+        rooms: hotel.rooms.map((room: any) => ({
+          id: room.id,
+          roomNumber: room.roomNumber,
+          roomType: room.roomType,
+          pricePerNight: room.pricePerNight,
+          maxOccupancy: room.maxOccupancy
+        }))
+      },
+      error: null
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      data: null,
+      error: 'INTERNAL_SERVER_ERROR'
+    });
+  }
+});
+
 router.post('/:hotelId/rooms', authMiddleware, requireRole('owner'), async (req, res) => {
   try {
     if (!req.user?.id){

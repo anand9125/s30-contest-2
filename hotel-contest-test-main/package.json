@@ -1,0 +1,20 @@
+{
+  "name": "hotel-cms-test",
+  "module": "index.test.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:verbose": "vitest run --reporter=verbose"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "vitest": "^4.0.17"
+  }
+}
